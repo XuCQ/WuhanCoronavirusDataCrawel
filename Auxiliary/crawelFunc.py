@@ -11,6 +11,8 @@ import json
 import codecs
 import pandas as pd
 import time
+import datetime
+import random
 
 
 # 判断网络连接状况
@@ -22,11 +24,41 @@ def judgeNetwork():
         print('网络连接失败')
         return False
 
+
+# pandas 读取csv
+def loadCSV(path, header=0):
+    return pd.read_csv(path, header=header, sep=',', encoding='gbk')
+
+
+# 生成日期列表
+def createAssistDate(datestart=None, dateend=None):
+    # 创建日期辅助表
+    if datestart is None:
+        datestart = '20200101'
+    if dateend is None:
+        dateend = datetime.datetime.now().strftime('%Y%m%d')
+    # 转为日期格式
+    datestart = datetime.datetime.strptime(datestart, '%Y%m%d')
+    dateend = datetime.datetime.strptime(dateend, '%Y%m%d')
+    date_list = []
+    date_list.append(datestart.strftime('%Y%m%d'))
+    while datestart < dateend:
+        # 日期叠加一天
+        datestart += datetime.timedelta(days=+1)
+        # 日期转字符串存入列表
+        date_list.append(datestart.strftime('%Y%m%d'))
+    return date_list
+
+
+# 随机生成指定位数
+def getRandomNum(Length):
+    return '1'+''.join(str(random.sample(range(0,9),1)[0]) for _ in range(Length-1))
+
+
 # 时间戳转换
 def timestampToLocaltime(timestamp):
     time_local = time.localtime(int(str(timestamp)[:10]))
-    return time.strftime("%Y-%m-%d %H:%M:%S",time_local)
-
+    return time.strftime("%Y-%m-%d %H:%M:%S", time_local)
 
 
 def loadinfo(results, csvPath, judge):
@@ -43,28 +75,29 @@ def loadinfo(results, csvPath, judge):
 
 def infoTemplate():
     infoTitle = ['adoptType', 'createTime', 'dataInfoOperator', 'dataInfoState', 'dataInfoTime', 'entryWay', 'id', 'infoSource', 'infoType', 'modifyTime',
-                 'provinceId','provinceName', 'pubDate', 'pubDateStr', 'sourceUrl', 'summary', 'title']
-    return dict(zip(infoTitle,['' for _ in infoTitle]))
+                 'provinceId', 'provinceName', 'pubDate', 'pubDateStr', 'sourceUrl', 'summary', 'title']
+    return dict(zip(infoTitle, ['' for _ in infoTitle]))
+
 
 def jsonToCsv(path):
     filePath, fileName = os.path.split(path)
     csvPath = os.path.join(os.path.dirname(filePath), 'csv', os.path.splitext(fileName)[0] + '.csv')
     flag = True
     infoTitle = ['adoptType', 'createTime', 'dataInfoOperator', 'dataInfoState', 'dataInfoTime', 'entryWay', 'id', 'infoSource', 'infoType', 'modifyTime',
-                 'provinceId','provinceName', 'pubDate', 'pubDateStr', 'sourceUrl', 'summary', 'title']
+                 'provinceId', 'provinceName', 'pubDate', 'pubDateStr', 'sourceUrl', 'summary', 'title']
     with open(path, 'r', encoding='utf-8') as jsonData_f:
         jsonData = json.load(jsonData_f)
         for info in jsonData['data']:
-            dictKeys=list(info.keys())
-            infoTitle_tmp=infoTitle.copy()
+            dictKeys = list(info.keys())
+            infoTitle_tmp = infoTitle.copy()
             for titleName in infoTitle:
                 if titleName in dictKeys:
                     infoTitle_tmp.remove(titleName)
                     dictKeys.remove(titleName)
-            for titleName in infoTitle_tmp: info[titleName]='null'
+            for titleName in infoTitle_tmp: info[titleName] = 'null'
             for titleName in dictKeys: del info[titleName]
-            if info['createTime']: info['createLocalTime']=timestampToLocaltime(info['createTime'])
-            if info['dataInfoTime']: info['dataInfocLocalTime']=timestampToLocaltime(info['dataInfoTime'])
+            if info['createTime']: info['createLocalTime'] = timestampToLocaltime(info['createTime'])
+            if info['dataInfoTime']: info['dataInfocLocalTime'] = timestampToLocaltime(info['dataInfoTime'])
             loadinfo(info, csvPath, flag)
             if flag: flag = False
         jsonData_f.close()
@@ -72,4 +105,5 @@ def jsonToCsv(path):
 
 
 if __name__ == '__main__':
-    jsonToCsv('../data/json/case_timeline_list_2020-02-04 22-23-00.json')
+    jsonToCsv('../data/json/case_timeline_list_202002101130.json')
+    # print(createAssistDate())
